@@ -71,32 +71,31 @@ def clip(value, lower, upper):
 
 class System(AbstractBaseClass):
     def __init__(self, init_state: float, system_noise_std: float, init_velocity: float = None) -> None:
-        self.state = init_state
-        self._velocity = init_velocity
+        self.position = init_state
+        self.velocity = init_velocity
         self._system_noise_std = system_noise_std
 
     @abstractmethod
-    def update(self, control: float) -> None:
+    def update(self, control: float, delta_time: float) -> None:
         raise NotImplementedError
-
-    def update_velocity(self, velocity: float) -> None:
-        self._velocity = velocity
 
 
 class LinearSystem(System):
-    def update(self, control: float) -> None:
+    def update(self, control: float, delta_time: float) -> None:
         noise = random.gauss(mu=0.0, sigma=self._system_noise_std)
-        self.state = self.state + control + noise
+        self.position = self.position + control + noise
 
 
 class MassSystem(System):
     def __init__(self, init_state: float, init_velocity: float, system_noise_std: float, delta_time: float) -> None:
         super().__init__(init_state, system_noise_std, init_velocity)
-        self.delta_time = delta_time
 
-    def update(self, control: float) -> None:
+    def update(self, control: float, delta_time: float) -> None:
+        """Control stands for acceleration"""
         noise = random.gauss(mu=0.0, sigma=self._system_noise_std)
-        self.state += self._velocity * self.delta_time + control + noise
+        self.velocity += control * delta_time + noise
+        self.position += self.velocity * delta_time
+        # print(f'(pos/vel): {old_state} -> {(self.position, self.velocity)}')
 
 
 class Sensor:

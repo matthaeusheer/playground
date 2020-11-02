@@ -1,21 +1,21 @@
-from pid_controller.controller import Controller, System, Sensor, ErrorSignal, MassSystem
+from pid_controller.controller import Controller, PidController, System, Sensor, ErrorSignal, MassSystem
 
 from typing import Generator, Tuple
 
 
 def closed_loop(system: System, controller: Controller, sensor: Sensor,
-                desired_state: float, init_velocity: float, desired_velocity: float = 0.0,
+                desired_state: float, init_velocity: float,
                 eps: float = 0.01, time_delta: float = 0.1,
                 max_time: float = None, max_steps: int = None,
                 print_debug: bool = False) -> Generator[Tuple[float], None, None]:
-    last_state = system.state  # init state
+    last_state = system.position  # init state
     previous_error = 0.0
 
     step_count = 0
     time = 0.0
 
-    while not (stop_due_to_max(time, step_count, max_time, max_steps) or stop_due_to_eps(system.state, desired_state, eps)):
-        measurement = sensor.measure(system.state)
+    while not (stop_due_to_max(time, step_count, max_time, max_steps) or stop_due_to_eps(system.position, desired_state, eps)):
+        measurement = sensor.measure(system.position)
         proportional_error = desired_state - measurement
         differential_error = (proportional_error - previous_error) / time_delta
         integral_part = proportional_error * time_delta
@@ -30,18 +30,17 @@ def closed_loop(system: System, controller: Controller, sensor: Sensor,
         controller_output = controller.apply(error_signal)
 
         if print_debug:
-            print(f'State: {system.state}')
+            print(f'State: {system.position}')
             print(f'Velocity: {velocity}')
             print(f'Error: {error_signal}')
             print(f'Controller: {controller_output}')
 
-        yield time, system.state, velocity, error_signal, controller_output
+        yield time, system.position, velocity, error_signal, controller_output
 
-        last_state = system.state
+        last_state = system.position
         previous_error = proportional_error
 
-        system.update_velocity(velocity)
-        system.update(control=controller_output)
+        system.update(control=controller_output, delta_time=time_delta)
 
         time += time_delta
         step_count += 1
