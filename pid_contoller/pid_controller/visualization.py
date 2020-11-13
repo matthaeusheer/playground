@@ -39,7 +39,7 @@ def setup_control_widgets() -> dict:
                                       description='D Gain', layout=layout, style=style),
         'i_gain': widgets.FloatSlider(value=0.0, min=0.0, max=3.0, step=0.01,
                                       description='I Gain', layout=layout, style=style),
-        'mass': widgets.FloatSlider(value=1.0, min=0.0, max=19.0, step=0.01,
+        'mass': widgets.FloatSlider(value=1.0, min=0.01, max=19.0, step=0.01,
                                     description='Mass', layout=layout, style=style),
         'eps': widgets.FloatSlider(value=0.001, min=0.0001, max=0.1, step=0.001,
                                    readout_format='.4f', description='eps', layout=layout, style=style),

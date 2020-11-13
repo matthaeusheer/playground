@@ -7,15 +7,15 @@ def closed_loop(system: System, controller: Controller, sensor: Sensor,
                 desired_state: float, init_velocity: float,
                 eps: float = 0.01, delta_time: float = 0.1,
                 max_time: float = None, max_steps: int = None,
-                print_debug: bool = False) -> Generator[Tuple[float], None, None]:
+                no_early_stop: bool = True, print_debug: bool = False) -> Generator[Tuple[float], None, None]:
     last_state = system.position  # init state
     previous_error = 0.0
 
     step_count = 0
     time = 0.0
 
-    while not (stop_due_to_max_steps_reached(time, step_count, max_time, max_steps) or
-               stop_due_to_eps(system.position, desired_state, eps)):
+    continue_running = True
+    while continue_running:
         measurement = sensor.measure(system.position)
         proportional_error = desired_state - measurement
         differential_error = (proportional_error - previous_error) / delta_time if step_count > 0 else 0.0
@@ -44,6 +44,14 @@ def closed_loop(system: System, controller: Controller, sensor: Sensor,
 
         time += delta_time
         step_count += 1
+
+        # Determine stopping criteria
+        should_stop_by_steps = stop_due_to_max_steps_reached(time, step_count, max_time, max_steps)
+        if no_early_stop:
+            continue_running = not should_stop_by_steps
+        else:
+            should_stop_by_eps = stop_due_to_eps(system.position, desired_state, eps)
+            continue_running = not (should_stop_by_eps or should_stop_by_steps)
 
 
 def stop_due_to_max_steps_reached(time_step: float, steps: int, max_time: float = None, max_steps: int = None) -> bool:
