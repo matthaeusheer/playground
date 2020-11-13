@@ -10,6 +10,7 @@ numpy = "*"
 matplotlib = "*"
 jupyterlab = "*"
 ipywidgets = "*"
+pyqt5 = "*"
 
 [requires]
 python_version = "3.8"
