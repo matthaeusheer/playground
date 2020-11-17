@@ -17,26 +17,14 @@ def closed_loop(system: System, controller: Controller, sensor: Sensor,
     continue_running = True
     while continue_running:
         measurement = sensor.measure(system.position)
+
         proportional_error = desired_state - measurement
         differential_error = (proportional_error - previous_error) / delta_time if step_count > 0 else 0.0
         integral_part = proportional_error * delta_time
 
-        velocity = (measurement - last_state) / delta_time if step_count > 0 else init_velocity
-        if print_debug:
-            print(f'measurement: {measurement}')
-            print(f'last state: {last_state}')
-            print(f'velocity: {velocity}')
-
         error_signal = ErrorSignal(proportional_error, differential_error, integral_part)
         controller_output = controller.apply(error_signal)
 
-        if print_debug:
-            print(f'State: {system.position}')
-            print(f'Velocity: {velocity}')
-            print(f'Error: {error_signal}')
-            print(f'Controller: {controller_output}')
-
-        last_state = system.position
         previous_error = proportional_error
 
         yield time, system.position, system.velocity, error_signal, controller_output

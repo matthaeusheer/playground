@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import ipywidgets as widgets
 from ipywidgets import Layout
 
-from pid_controller.controller import Controller, ProportionalDifferentialController
-
 from typing import Generator, List
 
 
@@ -47,20 +45,15 @@ def setup_control_widgets() -> dict:
                                          description='Max Steps', layout=layout, style=style),
         'max_time': widgets.FloatSlider(value=200, min=1, max=1000, step=10,
                                         description='Max Time', layout=layout, style=style),
-        'pizza': widgets.RadioButtons(
-            options=['pepperoni', 'pineapple', 'anchovies'],
-            #    value='pineapple', # Defaults to 'pineapple'
-            #    layout={'width': 'max-content'}, # If the items' names are long
-            description='Pizza topping:',
-            disabled=False
-        )
     }
     return widget_sliders
 
 
-def plot_control_loop_output(output_generator: Generator, controller: Controller,
-                             x_lim: List[int] = None, plot_errors: bool = True) -> plt.Figure:
+def plot_control_loop_output(output_generator: Generator, x_lim: List[int] = None, plot_errors: bool = True) -> plt.Figure:
     """Plot the output of a closed control loop run."""
+
+    # TODO: Make this an actual animation! :-)
+
     system_states = []
     velocities = []
     error_signals = defaultdict(list)
@@ -77,8 +70,7 @@ def plot_control_loop_output(output_generator: Generator, controller: Controller
                 error_signals[key].append(value)
         controller_outputs.append(controller_output)
 
-    fig, ax = setup_plt_figure(figsize=(25, 6), title=f'{type(controller).__name__}',
-                               xlabel='Time [s]', ylabel='State and Controls')
+    fig, ax = setup_plt_figure(figsize=(25, 6), xlabel='Time [s]', ylabel='State and Controls')
     linewidth = 1.5
 
     ax.plot(steps, system_states, color='green', linewidth=linewidth, alpha=0.8, label='Position')
