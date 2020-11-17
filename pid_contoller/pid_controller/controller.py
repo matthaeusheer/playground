@@ -69,11 +69,11 @@ class PidController(Controller):
 
     def apply(self, error_signal: ErrorSignal) -> float:
         self.integral += self._gains.integral * error_signal.integral
-        self.integral = clamp(self.integral, -1, 1)
+        self.integral = clamp(self.integral, -50, 50)
         p_part = self._gains.proportional * error_signal.proportional
         d_part = self._gains.differential * error_signal.differential
         i_part = self.integral
-        return clamp(p_part + d_part + i_part, -1, 1)
+        return clamp(p_part + d_part + i_part, -50, 50)
 
 
 class System(AbstractBaseClass):
@@ -100,18 +100,21 @@ class LinearSystem(System):
 
 class MassSystem(System):
     def __init__(self, init_position: float, init_velocity: float, system_noise_std: float,
-                 mass: float, delta_time: float) -> None:
+                 mass: float, delta_time: float, gravity: float = 0.1) -> None:
         super().__init__(init_position, system_noise_std, init_velocity, delta_time=delta_time)
         self._mass = mass
+        self._gravity = gravity
 
     def update(self, control: float) -> None:
         """Control stands for force applied to increase or decrease velocity."""
         noise = random.gauss(mu=0.0, sigma=self._system_noise_std)
         # F = m * a -> a = F / m
         # a = dv / dt -> dv = a * dt = (F / m) * dt
-        self.velocity += (control / self._mass) * self._delta_time + noise
+        # print(control / self._mass)
+        # print(self._gravity * self._mass)
+        # print()
         self.position += self.velocity * self._delta_time
-        # print(f'(pos/vel): -> {(self.position, self.velocity)}')
+        self.velocity += (control/self._mass - self._gravity) * self._delta_time + noise
 
 
 class Sensor:

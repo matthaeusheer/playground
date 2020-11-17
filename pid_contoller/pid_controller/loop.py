@@ -1,14 +1,12 @@
-from pid_controller.controller import Controller, PidController, System, Sensor, ErrorSignal, MassSystem
+from pid_controller.controller import PidController, System, Sensor, ErrorSignal, MassSystem
 
 from typing import Generator, Tuple
 
 
-def closed_loop(system: System, controller: Controller, sensor: Sensor,
-                desired_state: float, init_velocity: float,
-                eps: float = 0.01, delta_time: float = 0.1,
+def closed_loop(system: System, controller: PidController, sensor: Sensor,
+                desired_state: float, eps: float = 0.01, delta_time: float = 0.1,
                 max_time: float = None, max_steps: int = None,
-                no_early_stop: bool = True, print_debug: bool = False) -> Generator[Tuple[float], None, None]:
-    last_state = system.position  # init state
+                no_early_stop: bool = True) -> Generator[Tuple[float], None, None]:
     previous_error = 0.0
 
     step_count = 0
@@ -20,14 +18,14 @@ def closed_loop(system: System, controller: Controller, sensor: Sensor,
 
         proportional_error = desired_state - measurement
         differential_error = (proportional_error - previous_error) / delta_time if step_count > 0 else 0.0
-        integral_part = proportional_error * delta_time
+        integral_error = proportional_error * delta_time
 
-        error_signal = ErrorSignal(proportional_error, differential_error, integral_part)
+        error_signal = ErrorSignal(proportional_error, differential_error, integral_error)
         controller_output = controller.apply(error_signal)
 
         previous_error = proportional_error
 
-        yield time, system.position, system.velocity, error_signal, controller_output
+        yield time, system.position, system.velocity, error_signal, controller.integral, controller_output
         system.update(control=controller_output)
 
         time += delta_time

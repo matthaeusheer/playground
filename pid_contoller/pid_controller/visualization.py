@@ -14,42 +14,46 @@ def setup_control_widgets() -> dict:
 
     widget_sliders = {
         'init_state': widgets.FloatSlider(value=1.0, min=-10, max=10, step=0.1,
-                                          description='Initial Position',
+                                          description='Initial Position [m]',
                                           layout=layout, style=style),
         'init_velocity': widgets.FloatSlider(value=0.0, min=-10, max=10, step=0.1,
-                                             description='Initial Velocity',
+                                             description='Initial Velocity [m/s]',
                                              layout=layout, style=style),
         'desired_position': widgets.FloatSlider(value=5.0, min=-10, max=10, step=0.1,
-                                                description='Desired Position',
+                                                description='Desired Position [m]',
                                                 layout=layout, style=style),
         'system_noise_std': widgets.FloatSlider(value=0.0, min=0.0, max=0.05, step=0.005,
-                                                readout_format='.3f', description='System Noise',
+                                                readout_format='.3f', description='System Noise [m/s]',
                                                 layout=layout, style=style),
         'sensor_noise_std': widgets.FloatSlider(value=0.0, min=0.0, max=0.05, step=0.005,
-                                                readout_format='.3f', description='Sensor Noise',
+                                                readout_format='.3f', description='Sensor Noise [m]',
                                                 layout=layout, style=style),
-        'delta_time': widgets.FloatSlider(value=1.0, min=0.001, max=5.0, step=0.01,
+        'delta_time': widgets.FloatSlider(value=0.01, min=0.001, max=1.0, step=0.001,
                                           description='Time Step', layout=layout, style=style),
-        'p_gain': widgets.FloatSlider(value=0.0, min=0.0, max=3.0, step=0.01,
+        'p_gain': widgets.FloatSlider(value=0.0, min=0.0, max=10.0, step=0.001,
                                       description='P Gain',
                                       layout=layout, style=style),
-        'd_gain': widgets.FloatSlider(value=0.0, min=0.0, max=3.0, step=0.01,
+        'd_gain': widgets.FloatSlider(value=0.0, min=0.0, max=10.0, step=0.001,
                                       description='D Gain', layout=layout, style=style),
-        'i_gain': widgets.FloatSlider(value=0.0, min=0.0, max=3.0, step=0.01,
+        'i_gain': widgets.FloatSlider(value=0.0, min=0.0, max=5.0, step=0.001,
                                       description='I Gain', layout=layout, style=style),
         'mass': widgets.FloatSlider(value=1.0, min=0.01, max=19.0, step=0.01,
-                                    description='Mass', layout=layout, style=style),
+                                    description='Mass [kg]', layout=layout, style=style),
+        'gravity': widgets.FloatSlider(value=9.81, min=0.0, max=100.0, step=0.01,
+                                       description='Gravity [m/s^2]', layout=layout, style=style),
         'eps': widgets.FloatSlider(value=0.001, min=0.0001, max=0.1, step=0.001,
                                    readout_format='.4f', description='eps', layout=layout, style=style),
-        'max_steps': widgets.FloatSlider(value=200, min=1, max=1000, step=10,
-                                         description='Max Steps', layout=layout, style=style),
-        'max_time': widgets.FloatSlider(value=200, min=1, max=1000, step=10,
+        'max_time': widgets.FloatSlider(value=100, min=0.1, max=1000, step=0.1,
                                         description='Max Time', layout=layout, style=style),
+        'max_steps': widgets.FloatSlider(value=2000, min=1, max=20000, step=10,
+                                         description='Max Steps', layout=layout, style=style),
+
     }
     return widget_sliders
 
 
-def plot_control_loop_output(output_generator: Generator, x_lim: List[int] = None, plot_errors: bool = True) -> plt.Figure:
+def plot_control_loop_output(output_generator: Generator, x_lim: List[int] = None,
+                             plot_errors: bool = True) -> plt.Figure:
     """Plot the output of a closed control loop run."""
 
     # TODO: Make this an actual animation! :-)
@@ -58,28 +62,32 @@ def plot_control_loop_output(output_generator: Generator, x_lim: List[int] = Non
     velocities = []
     error_signals = defaultdict(list)
     controller_outputs = []
-    steps = []
+    time_step = []
 
     for output in output_generator:
-        step, system_state, velocity, error_signal, controller_output = output
-        steps.append(step)
+        step, system_state, velocity, error_signal, integral_error, controller_output = output
+        time_step.append(step)
         system_states.append(system_state)
         velocities.append(velocity)
         for key, value in error_signal.__dict__.items():
-            if value is not None:
+            if value is not None and key != 'integral':
                 error_signals[key].append(value)
+        error_signals['integral'].append(integral_error)
         controller_outputs.append(controller_output)
 
     fig, ax = setup_plt_figure(figsize=(25, 6), xlabel='Time [s]', ylabel='State and Controls')
     linewidth = 1.5
 
-    ax.plot(steps, system_states, color='green', linewidth=linewidth, alpha=0.8, label='Position')
-    ax.plot(steps, velocities, color='cyan', linewidth=linewidth, alpha=0.8, label='Velocity')
-    ax.plot(steps, controller_outputs, color='purple', linewidth=linewidth, alpha=0.8, label='Controller Output')
+    ax.plot(time_step, system_states, color='green', linewidth=linewidth, alpha=0.8, label='Position')
+    ax.plot(time_step, velocities, color='cyan', linewidth=linewidth, alpha=0.8, label='Velocity')
+    ax.plot(time_step, controller_outputs, color='purple', linewidth=linewidth, alpha=0.8, label='Controller Output')
     if plot_errors:
-        ax.plot(steps, error_signals['proportional'], color='red', linewidth=linewidth, alpha=0.8, label='Proportional Error')
-        ax.plot(steps, error_signals['differential'], color='orange', linewidth=linewidth, alpha=0.8, label='Differential Error')
-        ax.plot(steps, error_signals['integral'], color='magenta', linewidth=linewidth, alpha=0.8, label='Integral Error')
+        ax.plot(time_step, error_signals['proportional'], color='red', linewidth=linewidth, alpha=0.8,
+                label='Proportional Error')
+        ax.plot(time_step, error_signals['differential'], color='orange', linewidth=linewidth, alpha=0.8,
+                label='Differential Error')
+        ax.plot(time_step, error_signals['integral'], color='magenta', linewidth=linewidth, alpha=0.8,
+                label='Integral Error')
 
     if x_lim is not None:
         ax.set_xlim(x_lim)
