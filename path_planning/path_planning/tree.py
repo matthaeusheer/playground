@@ -1,6 +1,5 @@
 import math
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from typing import Generator
 
@@ -12,7 +11,20 @@ class Pose:
         self.y = y
 
     def distance_to(self, other: 'Pose') -> float:
-        return math.sqrt((self.x-other.x)**2 + (self.y-other.y)**2)
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+    @staticmethod
+    def subtract(p1: 'Pose', p2: 'Pose') -> 'Pose':
+        return Pose(p2.x - p1.x, p2.y - p1.y)
+
+    @staticmethod
+    def add(p1: 'Pose', p2: 'Pose') -> 'Pose':
+        return Pose(p1.x + p2.x, p1.y + p2.y)
+
+    @staticmethod
+    def normalize(p: 'Pose') -> 'Pose':
+        norm = Pose.distance_to(p, Pose(0, 0))
+        return Pose(p.x/norm, p.y/norm)
 
 
 class Node:

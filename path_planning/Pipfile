@@ -9,6 +9,9 @@ verify_ssl = true
 pytest = "*"
 matplotlib = "*"
 jupyterlab = "*"
+pyqtgraph = "*"
+pyqt5 = "*"
+pyserial = "*"
 
 [requires]
 python_version = "3.9"
