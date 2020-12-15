@@ -15,8 +15,8 @@ class RrtConfig:
     end_node: Node = Node(Pose(90, 65))
     eps: float = 3
     max_steps: int = 1000
-    clamp_dist: float = 2
-    fast_plot: bool = True
+    clamp_dist: float = 4
+    fast_plot: bool = False
 
 
 def rrt_path_finder(cfg: RrtConfig):

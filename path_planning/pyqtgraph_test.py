@@ -4,6 +4,7 @@ import pyqtgraph as pg
 import random
 
 # Create the main application instance
+pg.setConfigOption('background', 'w')
 app = pg.mkQApp()
 
 view = pg.PlotWidget()
